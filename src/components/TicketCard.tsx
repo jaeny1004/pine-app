@@ -34,10 +34,10 @@ export function TicketCard({ record }: TicketCardProps) {
           </span>
         </div>
         <p className="text-[14px] font-semibold text-text-main mb-0.5">
-          {record.phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-****-$3')}
+          {record.phone_number.replace(/(\d{3})(\d{4})(\d{4})/, '$1-****-$3')}
         </p>
         <p className="text-[11px] text-text-sub">
-          {record.lat.toFixed(4)}, {record.lng.toFixed(4)}
+          {record.latitude.toFixed(4)}, {record.longitude.toFixed(4)}
         </p>
       </div>
     </div>

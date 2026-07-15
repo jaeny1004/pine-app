@@ -152,7 +152,7 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
                 </span>
               </div>
               <p className="text-text-sub text-sm">
-                신고자 연락망 {selectedRecord.phone || '정보 없음'}
+                신고자 연락망 {selectedRecord.phone_number || '정보 없음'}
               </p>
             </div>
 
@@ -160,8 +160,8 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
               <div className="flex justify-between gap-4">
                 <span className="text-text-sub">GPS 정밀좌표</span>
                 <span className="font-bold text-text-main text-right">
-                  {selectedRecord.lat && selectedRecord.lng
-                    ? `${selectedRecord.lat}, ${selectedRecord.lng}`
+                  {selectedRecord.latitude && selectedRecord.longitude
+                    ? `${selectedRecord.latitude}, ${selectedRecord.longitude}`
                     : '좌표 정보 없음'}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
                 </span>
               </div>
               <p className="text-text-sub text-sm">
-                신고자 연락망 {selectedRecord.phone || '정보 없음'}
+                신고자 연락망 {selectedRecord.phone_number || '정보 없음'}
               </p>
             </div>
 
@@ -230,8 +230,8 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
               <div className="flex justify-between gap-4">
                 <span className="text-text-sub">GPS 정밀좌표</span>
                 <span className="font-bold text-text-main text-right">
-                  {selectedRecord.lat && selectedRecord.lng
-                    ? `${selectedRecord.lat}, ${selectedRecord.lng}`
+                  {selectedRecord.latitude && selectedRecord.longitude
+                    ? `${selectedRecord.latitude}, ${selectedRecord.longitude}`
                     : '좌표 정보 없음'}
                 </span>
               </div>

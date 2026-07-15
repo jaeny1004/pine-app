@@ -43,12 +43,11 @@ export function ReportWizard({ navigate, onSuccess }: ReportWizardProps) {
     const imageUrl = await uploadImage(imageFile);
     
     await addRecord({
-      lat: location.lat,
-      lng: location.lng,
+      latitude: location.lat,
+      longitude: location.lng,
       image_url: imageUrl || imagePreview || '',
-      phone: phone || '010-0000-0000',
+      phone_number: phone || '010-0000-0000',
       status: 'pending',
-      diagnosis_json: { q1, q2, q3, q4 }
     });
     
     setSubmitting(false);

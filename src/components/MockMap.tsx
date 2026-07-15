@@ -23,11 +23,10 @@ export function MockMap({ records, onMarkerClick }: MockMapProps) {
       <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Render Markers - just randomly scatter them based on their index or lat/lng modulos to keep it looking nice within the box */}
+      {/* Render Markers - just randomly scatter them based on their index or latitude/longitude modulos to keep it looking nice within the box */}
       {records.filter(r => r.status === 'pending').map((record, i) => {
-        // Map lat/lng roughly to percentages
-        const top = 10 + ((record.lat * 100) % 80);
-        const left = 10 + ((record.lng * 100) % 80);
+        const top = 10 + ((record.latitude * 100) % 80);
+        const left = 10 + ((record.longitude * 100) % 80);
         
         return (
           <motion.button

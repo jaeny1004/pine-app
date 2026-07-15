@@ -29,11 +29,11 @@ function MapAutoCenter({ records }: { records: PineRecord[] }) {
 
   useEffect(() => {
     const firstValidRecord = records.find(
-      record => typeof record.lat === 'number' && typeof record.lng === 'number'
+      record => typeof record.latitude === 'number' && typeof record.longitude === 'number'
     );
 
     if (firstValidRecord) {
-      map.setView([firstValidRecord.lat, firstValidRecord.lng], 13);
+      map.setView([firstValidRecord.latitude, firstValidRecord.longitude], 13);
     }
   }, [records, map]);
 
@@ -42,11 +42,11 @@ function MapAutoCenter({ records }: { records: PineRecord[] }) {
 
 export function LeafletMap({ records, onMarkerClick }: LeafletMapProps) {
   const firstValidRecord = records.find(
-    record => typeof record.lat === 'number' && typeof record.lng === 'number'
+    record => typeof record.latitude === 'number' && typeof record.longitude === 'number'
   );
 
   const center: [number, number] = firstValidRecord
-    ? [firstValidRecord.lat, firstValidRecord.lng]
+    ? [firstValidRecord.latitude, firstValidRecord.longitude]
     : DEFAULT_CENTER;
 
   return (
@@ -68,7 +68,7 @@ export function LeafletMap({ records, onMarkerClick }: LeafletMapProps) {
         {records.map(record => (
           <Marker
             key={record.id}
-            position={[record.lat, record.lng]}
+            position={[record.latitude, record.longitude]}
             eventHandlers={{
               click: () => onMarkerClick(record),
             }}
@@ -77,7 +77,7 @@ export function LeafletMap({ records, onMarkerClick }: LeafletMapProps) {
               <div>
                 <strong>의심목 신고건</strong>
                 <br />
-                {record.phone}
+                {record.phone_number}
               </div>
             </Popup>
           </Marker>
