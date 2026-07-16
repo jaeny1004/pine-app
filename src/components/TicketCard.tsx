@@ -19,9 +19,9 @@ export function TicketCard({ record }: TicketCardProps) {
 
   return (
     <div className="report-card bento-card p-3 flex gap-3 mb-0">
-      <img 
-        src={record.image_url} 
-        alt="Report" 
+      <img
+        src={record.image_url}
+        alt="Report"
         className="w-[60px] h-[60px] object-cover rounded-lg bg-system-bg shrink-0"
       />
       <div className="flex-1">
@@ -37,7 +37,9 @@ export function TicketCard({ record }: TicketCardProps) {
           {record.phone_number.replace(/(\d{3})(\d{4})(\d{4})/, '$1-****-$3')}
         </p>
         <p className="text-[11px] text-text-sub">
-          {record.latitude.toFixed(4)}, {record.longitude.toFixed(4)}
+          {record.latitude != null && record.longitude != null
+            ? `${record.latitude.toFixed(4)}, ${record.longitude.toFixed(4)}`
+            : '좌표 정보 없음'}
         </p>
       </div>
     </div>
