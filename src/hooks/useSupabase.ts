@@ -89,30 +89,46 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     fetchRecords();
   }, []);
 
-  const addRecord = async (record: Omit<PineRecord, 'id' | 'created_at'>) => {
-    if (supabase) {
-      const supabaseRecord = mapPineRecordToSupabase(record);
+  const addRecord = async (
+    record: Omit<PineRecord, 'id' | 'created_at'>
+  ) => {
+    console.log('① addRecord 호출 데이터:', record);
+    console.log('② Supabase 연결 여부:', !!supabase);
 
+    if (supabase) {
       const { data, error } = await supabase
         .from('pine_records')
-        .insert([supabaseRecord])
+        .insert([record])
         .select();
-      if (!error && data) {
-        const newRecord = mapSupabaseToPineRecord(data[0]);
+
+      console.log('③ Supabase insert data:', data);
+      console.log('④ Supabase insert error:', error);
+
+      if (error) {
+        return null;
+      }
+
+      if (data?.[0]) {
+        const newRecord = data[0] as PineRecord;
         setRecords(prev => [newRecord, ...prev]);
         return newRecord;
       }
-    } else {
-      const newRecord: PineRecord = {
-        ...record,
-        id: `mock-${Date.now()}`,
-        created_at: new Date().toISOString()
-      };
-      mockRecords = [newRecord, ...mockRecords];
-      setRecords([...mockRecords]);
-      return newRecord;
+
+      return null;
     }
-    return null;
+
+    console.warn('실제 Supabase가 아니라 mockRecords에 저장됩니다.');
+
+    const newRecord: PineRecord = {
+      ...record,
+      id: `mock-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    };
+
+    mockRecords = [newRecord, ...mockRecords];
+    setRecords([...mockRecords]);
+
+    return newRecord;
   };
 
   const updateStatus = async (id: string, status: PineRecord['status']) => {
