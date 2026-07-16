@@ -1,8 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ScreenName } from '../types';
-import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, Upload, MapPin, CheckCircle2 } from 'lucide-react';
-import { useGeolocation } from '../hooks/useGeolocation';
+import {
+  Camera,
+  ChevronLeft,
+  ImagePlus,
+  RotateCcw,
+  Send,
+  X,
+} from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
 
 interface ReportWizardProps {
@@ -10,185 +15,456 @@ interface ReportWizardProps {
   onSuccess: () => void;
 }
 
-export function ReportWizard({ navigate, onSuccess }: ReportWizardProps) {
-  const [step, setStep] = useState(1);
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
+export function ReportWizard({
+  navigate,
+  onSuccess,
+}: ReportWizardProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
-  const [q1, setQ1] = useState(false);
-  const [q2, setQ2] = useState(false);
-  const [q3, setQ3] = useState(false);
-  const [q4, setQ4] = useState(false);
   const [phone, setPhone] = useState('');
-  
-  const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { location, loading: geoLoading, error: geoError, getFromImage } = useGeolocation();
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
   const { addRecord, uploadImage } = useSupabase();
 
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      await getFromImage(file);
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setCameraOpen(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+
+      if (imagePreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
+  const startCamera = async () => {
+    try {
+      setCameraError('');
+      setSubmitError('');
+
+      stopCamera();
+      setCameraOpen(true);
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: {
+            ideal: 'environment',
+          },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+
+      window.setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(error => {
+            console.error('Video play error:', error);
+          });
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Camera start error:', error);
+
+      setCameraOpen(false);
+      setCameraError(
+        '카메라를 실행할 수 없습니다. 브라우저의 카메라 권한을 허용해주세요.'
+      );
     }
   };
 
-  const handleSubmit = async () => {
-    if (!imageFile || !location) return;
-    setSubmitting(true);
-    
-    const imageUrl = await uploadImage(imageFile);
-    
-    await addRecord({
-      latitude: location.lat,
-      longitude: location.lng,
-      image_url: imageUrl || imagePreview || '',
-      phone_number: phone || '010-0000-0000',
-      status: 'pending',
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas) {
+      return;
+    }
+
+    if (!video.videoWidth || !video.videoHeight) {
+      setCameraError('카메라 화면이 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      setCameraError('사진을 처리할 수 없습니다.');
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(
+      blob => {
+        if (!blob) {
+          setCameraError('사진 생성에 실패했습니다.');
+          return;
+        }
+
+        if (imagePreview?.startsWith('blob:')) {
+          URL.revokeObjectURL(imagePreview);
+        }
+
+        const capturedFile = new File(
+          [blob],
+          `pine-report-${Date.now()}.jpg`,
+          {
+            type: 'image/jpeg',
+          }
+        );
+
+        const previewUrl = URL.createObjectURL(capturedFile);
+
+        setImageFile(capturedFile);
+        setImagePreview(previewUrl);
+        stopCamera();
+      },
+      'image/jpeg',
+      0.9
+    );
+  };
+
+  const handleGallerySelect = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (imagePreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setCameraError('');
+    setSubmitError('');
+
+    event.target.value = '';
+  };
+
+  const removeImage = () => {
+    if (imagePreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, '').slice(0, 11);
+
+    if (numbers.length <= 3) {
+      return numbers;
+    }
+
+    if (numbers.length <= 7) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    }
+
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+  };
+
+  const getCurrentCoordinates = (): Promise<Coordinates> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('이 기기에서는 위치정보를 사용할 수 없습니다.'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        error => {
+          console.error('Geolocation error:', error);
+          reject(
+            new Error(
+              '위치정보를 가져올 수 없습니다. 브라우저의 위치 권한을 허용해주세요.'
+            )
+          );
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 30000,
+        }
+      );
     });
-    
-    setSubmitting(false);
-    onSuccess();
+  };
+
+  const handleSubmit = async () => {
+    if (!imageFile) {
+      setSubmitError('신고할 사진을 촬영하거나 갤러리에서 선택해주세요.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setSubmitError('');
+
+      // 화면에는 표시하지 않고 제출 시 위치정보만 수집
+      const coordinates = await getCurrentCoordinates();
+
+      // Supabase Storage에 사진 업로드
+      const imageUrl = await uploadImage(imageFile);
+
+      if (!imageUrl) {
+        throw new Error('사진 업로드에 실패했습니다.');
+      }
+
+      // Supabase pine_records 테이블에 신고 데이터 저장
+      const savedRecord = await addRecord({
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        image_url: imageUrl,
+        phone_number: phone || '미입력',
+        status: 'pending',
+        ai_probability: null,
+        ai_label: null,
+        ai_status: 'pending',
+      });
+
+      if (!savedRecord) {
+        throw new Error('신고 정보를 저장하지 못했습니다.');
+      }
+
+      onSuccess();
+    } catch (error) {
+      console.error('Report submit error:', error);
+
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : '신고 접수 중 오류가 발생했습니다.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-system-bg flex flex-col">
+      {/* 상단 헤더 */}
       <div className="bg-card-bg p-4 pt-12 flex items-center border-b border-[rgba(0,0,0,0.04)] sticky top-0 z-10 shadow-sm">
-        <button onClick={() => navigate('home')} className="p-2 -ml-2 text-text-sub active:bg-system-bg rounded-full transition-colors">
+        <button
+          onClick={() => navigate('home')}
+          className="p-2 -ml-2 text-text-sub active:bg-system-bg rounded-full transition-colors"
+        >
           <ChevronLeft size={28} />
         </button>
+
         <div className="flex-1 text-center font-semibold text-text-main mr-8">
-          의심목 신고 (Step {step}/2)
+          의심목 신고
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
-        <AnimatePresence mode="wait">
-          {step === 1 ? (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
-              <div>
-                <h2 className="text-xl font-bold text-text-main mb-2">사진 촬영 및 업로드</h2>
-                <p className="text-text-sub text-sm">피해를 입은 소나무의 전체 모습과 특징이 잘 보이게 찍어주세요.</p>
-              </div>
+      <div className="flex-1 overflow-y-auto p-6 pb-32">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-text-main mb-2">
+              의심목 사진 등록
+            </h2>
 
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-64 bg-card-bg border-2 border-dashed border-[rgba(0,0,0,0.1)] rounded-bento flex flex-col items-center justify-center overflow-hidden relative active:border-primary transition-colors shadow-bento"
-              >
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="flex flex-col items-center text-text-sub opacity-70">
-                    <Upload size={32} className="mb-2" />
-                    <span className="font-medium">탭하여 사진 선택</span>
-                  </div>
-                )}
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  ref={fileInputRef}
-                  onChange={handleImageSelect}
+            <p className="text-text-sub text-sm leading-6">
+              피해를 입은 소나무의 전체 모습과 특징이 잘 보이도록
+              촬영하거나 갤러리에서 사진을 선택해주세요.
+            </p>
+          </div>
+
+          {/* 카메라 실행 화면 */}
+          {cameraOpen && (
+            <div className="bg-black rounded-bento overflow-hidden shadow-bento">
+              <div className="relative w-full h-[420px] bg-black">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
                 />
-              </div>
 
-              <div className="bg-blue-50 p-4 rounded-2xl flex items-start gap-3">
-                <MapPin className="text-blue-500 shrink-0 mt-0.5" size={20} />
-                <div>
-                  <h3 className="font-semibold text-blue-900 text-sm mb-1">위치 정보 추출</h3>
-                  {geoLoading ? (
-                    <p className="text-blue-700 text-sm">사진에서 위치 정보를 추출하는 중...</p>
-                  ) : location ? (
-                    <p className="text-blue-700 text-sm font-mono">
-                      Lat: {location.lat.toFixed(5)}<br/>Lng: {location.lng.toFixed(5)}
-                    </p>
-                  ) : geoError ? (
-                    <p className="text-red-500 text-sm">{geoError}</p>
-                  ) : (
-                    <p className="text-blue-700 text-sm">사진을 업로드하면 GPS 정보를 자동 추출합니다.</p>
-                  )}
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center"
+                >
+                  <X size={22} />
+                </button>
+
+                <div className="absolute bottom-5 left-0 right-0 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="w-20 h-20 rounded-full border-4 border-white bg-white/30 flex items-center justify-center active:scale-95 transition-transform"
+                    aria-label="사진 촬영"
+                  >
+                    <div className="w-15 h-15 rounded-full bg-white" />
+                  </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* 사진 미리보기 */}
+          {!cameraOpen && imagePreview && (
+            <div className="relative w-full h-72 rounded-bento overflow-hidden bg-card-bg shadow-bento">
+              <img
+                src={imagePreview}
+                alt="신고 사진 미리보기"
+                className="w-full h-full object-cover"
+              />
 
               <button
-                disabled={!imageFile || !location}
-                onClick={() => setStep(2)}
-                className="w-full bg-primary text-white font-bold py-4 rounded-bento disabled:opacity-50 mt-8 shadow-bento"
+                type="button"
+                onClick={removeImage}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/55 text-white flex items-center justify-center"
               >
-                다음 단계로
+                <X size={21} />
               </button>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="space-y-6"
-            >
-              <div>
-                <h2 className="text-xl font-bold text-text-main mb-2">자가 진단 및 연락처</h2>
-                <p className="text-text-sub text-sm">해당되는 증상을 모두 선택해주세요.</p>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { state: q1, set: setQ1, label: '솔잎 처짐 증상이 있나요?' },
-                  { state: q2, set: setQ2, label: '잎 전체가 적갈색으로 변색되었나요?' },
-                  { state: q3, set: setQ3, label: '수피(나무껍질)에 침입공이나 분비물이 보이나요?' },
-                  { state: q4, set: setQ4, label: '송진 흐름이 멈추고 나무가 말라죽었나요?' },
-                ].map((q, idx) => (
-                  <label key={idx} className="flex items-center gap-3 bento-card p-4 cursor-pointer">
-                    <button 
-                      onClick={() => q.set(!q.state)}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center border transition-colors ${q.state ? 'bg-primary border-primary' : 'border-[rgba(0,0,0,0.1)]'}`}
-                    >
-                      {q.state && <CheckCircle2 size={16} className="text-white" />}
-                    </button>
-                    <span className="text-sm font-medium text-text-main">{q.label}</span>
-                  </label>
-                ))}
-              </div>
-
-              <div className="mt-6">
-                <label className="block text-sm font-semibold text-text-main mb-2">연락처 (선택)</label>
-                <input 
-                  type="tel"
-                  placeholder="010-1234-5678"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  className="w-full bg-card-bg border border-[rgba(0,0,0,0.1)] rounded-[15px] px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
-                />
-              </div>
-
-              <div className="flex gap-3 mt-8">
-                <button
-                  onClick={() => setStep(1)}
-                  className="w-1/3 bg-card-bg text-text-main font-bold py-4 rounded-bento border border-[rgba(0,0,0,0.1)] shadow-sm"
-                >
-                  이전
-                </button>
-                <button
-                  disabled={submitting}
-                  onClick={handleSubmit}
-                  className="flex-1 bg-primary text-white font-bold py-4 rounded-bento disabled:opacity-50 shadow-bento"
-                >
-                  {submitting ? '접수 중...' : '신고 접수하기'}
-                </button>
-              </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+
+          {/* 사진이 없을 때 안내 영역 */}
+          {!cameraOpen && !imagePreview && (
+            <div className="w-full h-64 bg-card-bg border-2 border-dashed border-[rgba(0,0,0,0.1)] rounded-bento flex flex-col items-center justify-center text-text-sub shadow-bento">
+              <Camera size={38} className="mb-3 opacity-60" />
+              <span className="font-semibold">신고 사진을 등록해주세요</span>
+            </div>
+          )}
+
+          {/* 촬영/갤러리 버튼 */}
+          {!cameraOpen && (
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={startCamera}
+                className="bg-primary text-white font-bold py-4 rounded-bento flex items-center justify-center gap-2 shadow-bento active:scale-[0.98] transition-transform"
+              >
+                <Camera size={20} />
+                사진 촬영
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-card-bg text-text-main font-bold py-4 rounded-bento border border-[rgba(0,0,0,0.08)] flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-transform"
+              >
+                <ImagePlus size={20} />
+                갤러리 업로드
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleGallerySelect}
+              />
+            </div>
+          )}
+
+          {/* 재촬영 버튼 */}
+          {!cameraOpen && imagePreview && (
+            <button
+              type="button"
+              onClick={startCamera}
+              className="w-full bg-card-bg text-text-main font-bold py-3 rounded-xl border border-[rgba(0,0,0,0.08)] flex items-center justify-center gap-2"
+            >
+              <RotateCcw size={18} />
+              다시 촬영하기
+            </button>
+          )}
+
+          {cameraError && (
+            <div className="bg-red-50 text-red-500 text-sm rounded-2xl p-4">
+              {cameraError}
+            </div>
+          )}
+
+          {/* 연락처 */}
+          <div>
+            <label className="block text-sm font-semibold text-text-main mb-2">
+              연락처
+            </label>
+
+            <input
+              type="tel"
+              inputMode="numeric"
+              placeholder="010-1234-5678"
+              value={phone}
+              onChange={event =>
+                setPhone(formatPhoneNumber(event.target.value))
+              }
+              className="w-full bg-card-bg border border-[rgba(0,0,0,0.1)] rounded-[15px] px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
+            />
+
+            <p className="text-xs text-text-sub mt-2">
+              처리 결과 안내를 받을 전화번호를 입력해주세요.
+            </p>
+          </div>
+
+          {submitError && (
+            <div className="bg-red-50 text-red-500 text-sm rounded-2xl p-4">
+              {submitError}
+            </div>
+          )}
+
+          {/* 신고하기 */}
+          <button
+            type="button"
+            disabled={!imageFile || submitting || cameraOpen}
+            onClick={handleSubmit}
+            className="w-full bg-primary text-white font-bold py-4 rounded-bento disabled:opacity-50 shadow-bento flex items-center justify-center gap-2"
+          >
+            <Send size={20} />
+
+            {submitting ? '신고 접수 중...' : '신고하기'}
+          </button>
+        </div>
       </div>
+
+      {/* 카메라 캡처용 숨김 canvas */}
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }
