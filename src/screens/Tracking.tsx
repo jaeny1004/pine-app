@@ -14,7 +14,7 @@ export function Tracking({ navigate }: TrackingProps) {
   if (!latestRecord) {
     return (
       <div className="h-full bg-system-bg flex flex-col">
-        <div className="p-4 pt-12">
+        <div className="p-4 pt-4">
           <button onClick={() => navigate('home')} className="p-2 text-text-sub">
             <ChevronLeft size={28} />
           </button>
@@ -39,7 +39,7 @@ export function Tracking({ navigate }: TrackingProps) {
 
   return (
     <div className="h-full bg-system-bg flex flex-col overflow-y-auto">
-      <div className="bg-card-bg p-4 pt-12 flex items-center border-b border-[rgba(0,0,0,0.04)] shrink-0">
+      <div className="bg-card-bg p-4 pt-4 flex items-center border-b border-[rgba(0,0,0,0.04)] shrink-0">
         <button onClick={() => navigate('home')} className="p-2 -ml-2 text-text-sub">
           <ChevronLeft size={28} />
         </button>

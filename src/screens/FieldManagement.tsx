@@ -77,7 +77,7 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
   return (
     <div className="h-full bg-system-bg flex flex-col overflow-hidden">
       {/* Header Tabs */}
-      <div className="bg-card-bg pt-12 pb-4 px-4 shadow-sm z-10 border-b border-[rgba(0,0,0,0.04)] shrink-0">
+      <div className="bg-card-bg pt-4 pb-4 px-4 shadow-sm z-10 border-b border-[rgba(0,0,0,0.04)] shrink-0">
         <h1 className="text-xl font-bold text-text-main mb-4">현장 업무 관리</h1>
 
         <div className="flex bg-system-bg p-1 rounded-xl">

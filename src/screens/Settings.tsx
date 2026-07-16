@@ -9,7 +9,7 @@ interface SettingsProps {
 export function Settings({ navigate, setIsAuthenticated }: SettingsProps) {
   return (
     <div className="h-full bg-system-bg flex flex-col">
-      <div className="bg-card-bg p-4 pt-12 flex items-center border-b border-[rgba(0,0,0,0.04)] shrink-0">
+      <div className="bg-card-bg px-4 py-4 flex items-center border-b border-[rgba(0,0,0,0.04)] shadow-sm">
         <button onClick={() => navigate('field')} className="p-2 -ml-2 text-text-sub">
           <ChevronLeft size={28} />
         </button>

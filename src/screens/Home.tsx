@@ -15,7 +15,7 @@ export function Home({ navigate, isAuthenticated }: HomeProps) {
 
   return (
     <div className="h-full bg-system-bg p-6 flex flex-col overflow-y-auto">
-      <div className="pt-12 pb-8">
+      <div className="pt-4 pb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="bg-primary p-2 rounded-xl shadow-sm">
             <Shield className="text-white" size={28} />

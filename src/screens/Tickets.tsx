@@ -7,7 +7,7 @@ export function Tickets({ navigate }: { navigate: (s: ScreenName) => void }) {
 
   return (
     <div className="h-full bg-system-bg flex flex-col">
-      <div className="bg-card-bg p-4 pt-12 flex items-center border-b border-[rgba(0,0,0,0.04)] shadow-sm sticky top-0 z-10 shrink-0">
+      <div className="bg-card-bg p-4 pt-4 flex items-center border-b border-[rgba(0,0,0,0.04)] shadow-sm sticky top-0 z-10 shrink-0">
         <h1 className="text-xl font-bold text-text-main flex-1 text-center">전체 민원</h1>
       </div>
       <div className="p-4 space-y-3 overflow-y-auto flex-1 pb-6">

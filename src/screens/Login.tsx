@@ -41,7 +41,7 @@ export function Login({ navigate, setIsAuthenticated }: LoginProps) {
 
   return (
     <div className="h-full bg-system-bg flex flex-col items-center">
-      <div className="w-full p-4 flex items-center pt-12">
+      <div className="w-full p-4 flex items-center pt-4">
         <button onClick={() => navigate('home')} className="p-2 text-text-sub">
           <ChevronLeft size={28} />
         </button>
