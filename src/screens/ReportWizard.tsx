@@ -4,7 +4,6 @@ import {
   Camera,
   ChevronLeft,
   ImagePlus,
-  RotateCcw,
   Send,
   X,
 } from 'lucide-react';
@@ -311,66 +310,67 @@ export function ReportWizard({
             </p>
           </div>
 
-          {/* 카메라 실행 화면 */}
-          {cameraOpen && (
-            <div className="bg-black rounded-bento overflow-hidden shadow-bento">
-              <div className="relative w-full h-[420px] bg-black">
+          {/* 사진 촬영 / 미리보기 통합 영역 */}
+          <div className="relative w-full h-72 bg-card-bg border-2 border-dashed border-[rgba(0,0,0,0.1)] rounded-bento overflow-hidden shadow-bento">
+            {cameraOpen ? (
+              <>
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover bg-black"
                 />
 
                 <button
                   type="button"
                   onClick={stopCamera}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center"
+                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/55 text-white flex items-center justify-center z-10"
+                  aria-label="카메라 닫기"
                 >
-                  <X size={22} />
+                  <X size={21} />
                 </button>
 
-                <div className="absolute bottom-5 left-0 right-0 flex justify-center">
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                   <button
                     type="button"
                     onClick={capturePhoto}
-                    className="w-20 h-20 rounded-full border-4 border-white bg-white/30 flex items-center justify-center active:scale-95 transition-transform"
+                    className="w-16 h-16 rounded-full border-4 border-white bg-white/30 flex items-center justify-center active:scale-95 transition-transform"
                     aria-label="사진 촬영"
                   >
-                    <div className="w-15 h-15 rounded-full bg-white" />
+                    <div className="w-12 h-12 rounded-full bg-white" />
                   </button>
                 </div>
+              </>
+            ) : imagePreview ? (
+              <>
+                <img
+                  src={imagePreview}
+                  alt="신고 사진 미리보기"
+                  className="w-full h-full object-cover"
+                />
+
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/55 text-white flex items-center justify-center"
+                  aria-label="사진 삭제"
+                >
+                  <X size={21} />
+                </button>
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-text-sub">
+                <Camera size={38} className="mb-3 opacity-60" />
+                <span className="font-semibold">신고 사진을 등록해주세요</span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* 사진 미리보기 */}
-          {!cameraOpen && imagePreview && (
-            <div className="relative w-full h-72 rounded-bento overflow-hidden bg-card-bg shadow-bento">
-              <img
-                src={imagePreview}
-                alt="신고 사진 미리보기"
-                className="w-full h-full object-cover"
-              />
 
-              <button
-                type="button"
-                onClick={removeImage}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/55 text-white flex items-center justify-center"
-              >
-                <X size={21} />
-              </button>
-            </div>
-          )}
 
-          {/* 사진이 없을 때 안내 영역 */}
-          {!cameraOpen && !imagePreview && (
-            <div className="w-full h-64 bg-card-bg border-2 border-dashed border-[rgba(0,0,0,0.1)] rounded-bento flex flex-col items-center justify-center text-text-sub shadow-bento">
-              <Camera size={38} className="mb-3 opacity-60" />
-              <span className="font-semibold">신고 사진을 등록해주세요</span>
-            </div>
-          )}
+
+
 
           {/* 촬영/갤러리 버튼 */}
           {!cameraOpen && (
@@ -403,17 +403,6 @@ export function ReportWizard({
             </div>
           )}
 
-          {/* 재촬영 버튼 */}
-          {!cameraOpen && imagePreview && (
-            <button
-              type="button"
-              onClick={startCamera}
-              className="w-full bg-card-bg text-text-main font-bold py-3 rounded-xl border border-[rgba(0,0,0,0.08)] flex items-center justify-center gap-2"
-            >
-              <RotateCcw size={18} />
-              다시 촬영하기
-            </button>
-          )}
 
           {cameraError && (
             <div className="bg-red-50 text-red-500 text-sm rounded-2xl p-4">
