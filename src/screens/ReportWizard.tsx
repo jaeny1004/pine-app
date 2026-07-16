@@ -325,7 +325,7 @@ export function ReportWizard({
   return (
     <div className="h-full min-h-0 bg-system-bg flex flex-col overflow-hidden">
       {/* 상단 헤더 */}
-      <div className="bg-card-bg px-4 py-4 flex items-center border-b border-[rgba(0,0,0,0.04)] sticky top-0 z-10 shadow-sm">        <button
+      <div className="bg-card-bg px-4 py-3 flex items-center border-b border-[rgba(0,0,0,0.04)] sticky top-0 z-10 shadow-sm">        <button
         onClick={() => navigate('home')}
         className="p-2 -ml-2 text-text-sub active:bg-system-bg rounded-full transition-colors"
       >
@@ -337,15 +337,14 @@ export function ReportWizard({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 pb-44">        <div className="space-y-4">
+      <div className="flex-1 min-h-0 overflow-hidden px-4 py-3 pb-36">        <div className="space-y-3">
         <div>
-          <h2 className="text-xl font-bold text-text-main mb-1">
+          <h2 className="text-lg font-bold text-text-main mb-1">
             의심목 사진 등록
           </h2>
 
           <p className="text-text-sub text-sm leading-5">
-            피해를 입은 소나무의 전체 모습과 특징이 잘 보이도록
-            촬영하거나 갤러리에서 사진을 선택해주세요.
+            피해를 입은 소나무의 모습이 담긴 사진을 촬영하거나 업로드하여 주세요
           </p>
         </div>
 
