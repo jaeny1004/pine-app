@@ -27,7 +27,7 @@ export function ReportWizard({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
 
-  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(true);
   const [cameraError, setCameraError] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -69,7 +69,19 @@ export function ReportWizard({
       setCameraError('');
       setSubmitError('');
 
-      stopCamera();
+      // 기존 카메라가 실행 중이면 종료
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+
+      // 기존 사진이 있다면 제거하고 촬영 모드로 전환
+      if (imagePreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+
+      setImageFile(null);
+      setImagePreview(null);
       setCameraOpen(true);
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -86,6 +98,7 @@ export function ReportWizard({
       window.setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+
           videoRef.current.play().catch(error => {
             console.error('Video play error:', error);
           });
@@ -100,6 +113,23 @@ export function ReportWizard({
       );
     }
   };
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      startCamera();
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timer);
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    };
+
+    // 최초 화면 진입 시 한 번만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const capturePhoto = () => {
     const video = videoRef.current;
@@ -165,10 +195,21 @@ export function ReportWizard({
       return;
     }
 
+    // 카메라 종료
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
     if (imagePreview?.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
     }
 
+    setCameraOpen(false);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
     setCameraError('');
@@ -310,9 +351,37 @@ export function ReportWizard({
             </p>
           </div>
 
-          {/* 사진 촬영 / 미리보기 통합 영역 */}
-          <div className="relative w-full h-72 bg-card-bg border-2 border-dashed border-[rgba(0,0,0,0.1)] rounded-bento overflow-hidden shadow-bento">
-            {cameraOpen ? (
+          {/* 사진 촬영 / 갤러리 미리보기 통합 영역 */}
+          <div className="relative w-full h-72 bg-black border-2 border-dashed border-[rgba(0,0,0,0.1)] rounded-bento overflow-hidden shadow-bento">
+            {imagePreview ? (
+              <>
+                <img
+                  src={imagePreview}
+                  alt="신고 사진 미리보기"
+                  className="w-full h-full object-cover"
+                />
+
+                {/* 다시 촬영 */}
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  className="absolute top-3 left-3 px-3 py-2 rounded-xl bg-black/60 text-white text-xs font-bold flex items-center gap-1"
+                >
+                  <Camera size={16} />
+                  다시 촬영
+                </button>
+
+                {/* 사진 삭제 */}
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center"
+                  aria-label="사진 삭제"
+                >
+                  <X size={21} />
+                </button>
+              </>
+            ) : cameraOpen ? (
               <>
                 <video
                   ref={videoRef}
@@ -322,15 +391,7 @@ export function ReportWizard({
                   className="w-full h-full object-cover bg-black"
                 />
 
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/55 text-white flex items-center justify-center z-10"
-                  aria-label="카메라 닫기"
-                >
-                  <X size={21} />
-                </button>
-
+                {/* 촬영 버튼 */}
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                   <button
                     type="button"
@@ -341,67 +402,52 @@ export function ReportWizard({
                     <div className="w-12 h-12 rounded-full bg-white" />
                   </button>
                 </div>
+
+                <div className="pointer-events-none absolute top-4 left-4 right-4 text-center">
+                  <span className="inline-block bg-black/45 text-white text-xs rounded-full px-3 py-1.5">
+                    의심목 전체 모습이 보이도록 촬영해주세요
+                  </span>
+                </div>
               </>
-            ) : imagePreview ? (
-              <>
-                <img
-                  src={imagePreview}
-                  alt="신고 사진 미리보기"
-                  className="w-full h-full object-cover"
-                />
+            ) : (
+              <div className="w-full h-full bg-card-bg flex flex-col items-center justify-center text-text-sub">
+                <Camera size={38} className="mb-3 opacity-60" />
+
+                <span className="font-semibold mb-4">
+                  카메라를 시작할 수 없습니다
+                </span>
 
                 <button
                   type="button"
-                  onClick={removeImage}
-                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/55 text-white flex items-center justify-center"
-                  aria-label="사진 삭제"
+                  onClick={startCamera}
+                  className="bg-primary text-white px-5 py-3 rounded-xl font-bold"
                 >
-                  <X size={21} />
+                  카메라 다시 시작
                 </button>
-              </>
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-text-sub">
-                <Camera size={38} className="mb-3 opacity-60" />
-                <span className="font-semibold">신고 사진을 등록해주세요</span>
               </div>
             )}
           </div>
 
 
+          {/* 갤러리 업로드 버튼 */}
+          <div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full bg-card-bg text-text-main font-bold py-4 rounded-bento border border-[rgba(0,0,0,0.08)] flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-transform"
+            >
+              <ImagePlus size={20} />
+              갤러리에서 사진 선택
+            </button>
 
-
-
-
-          {/* 촬영/갤러리 버튼 */}
-          {!cameraOpen && (
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={startCamera}
-                className="bg-primary text-white font-bold py-4 rounded-bento flex items-center justify-center gap-2 shadow-bento active:scale-[0.98] transition-transform"
-              >
-                <Camera size={20} />
-                사진 촬영
-              </button>
-
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-card-bg text-text-main font-bold py-4 rounded-bento border border-[rgba(0,0,0,0.08)] flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-transform"
-              >
-                <ImagePlus size={20} />
-                갤러리 업로드
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleGallerySelect}
-              />
-            </div>
-          )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleGallerySelect}
+            />
+          </div>
 
 
           {cameraError && (
@@ -441,7 +487,7 @@ export function ReportWizard({
           {/* 신고하기 */}
           <button
             type="button"
-            disabled={!imageFile || submitting || cameraOpen}
+            disabled={!imageFile || submitting}
             onClick={handleSubmit}
             className="w-full bg-primary text-white font-bold py-4 rounded-bento disabled:opacity-50 shadow-bento flex items-center justify-center gap-2"
           >
