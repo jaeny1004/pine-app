@@ -479,10 +479,7 @@ export function ReportWizard({
             {submitError}
           </div>
         )}
-      </div>
-      </div>
-      {/* 하단 네비게이션 바로 위에 고정되는 신고하기 버튼 */}
-      <div className="fixed left-0 right-0 bottom-[72px] z-30 mx-auto max-w-md px-6 py-3 bg-system-bg/95 backdrop-blur-sm border-t border-[rgba(0,0,0,0.04)]">
+        {/* 신고하기 */}
         <button
           type="button"
           disabled={!imageFile || submitting}
@@ -493,6 +490,8 @@ export function ReportWizard({
           {submitting ? '신고 접수 중...' : '신고하기'}
         </button>
       </div>
+      </div>
+
       {/* 카메라 캡처용 숨김 canvas */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
