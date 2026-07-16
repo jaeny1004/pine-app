@@ -325,165 +325,162 @@ export function ReportWizard({
   return (
     <div className="h-full min-h-0 bg-system-bg flex flex-col overflow-hidden">
       {/* 상단 헤더 */}
-      <div className="bg-card-bg p-4 pt-12 flex items-center border-b border-[rgba(0,0,0,0.04)] sticky top-0 z-10 shadow-sm">
-        <button
-          onClick={() => navigate('home')}
-          className="p-2 -ml-2 text-text-sub active:bg-system-bg rounded-full transition-colors"
-        >
-          <ChevronLeft size={28} />
-        </button>
+      <div className="bg-card-bg px-4 py-4 flex items-center border-b border-[rgba(0,0,0,0.04)] sticky top-0 z-10 shadow-sm">        <button
+        onClick={() => navigate('home')}
+        className="p-2 -ml-2 text-text-sub active:bg-system-bg rounded-full transition-colors"
+      >
+        <ChevronLeft size={28} />
+      </button>
 
         <div className="flex-1 text-center font-semibold text-text-main mr-8">
           의심목 신고
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-44">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-bold text-text-main mb-2">
-              의심목 사진 등록
-            </h2>
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 pb-44">        <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-bold text-text-main mb-1">
+            의심목 사진 등록
+          </h2>
 
-            <p className="text-text-sub text-sm leading-6">
-              피해를 입은 소나무의 전체 모습과 특징이 잘 보이도록
-              촬영하거나 갤러리에서 사진을 선택해주세요.
-            </p>
-          </div>
+          <p className="text-text-sub text-sm leading-5">
+            피해를 입은 소나무의 전체 모습과 특징이 잘 보이도록
+            촬영하거나 갤러리에서 사진을 선택해주세요.
+          </p>
+        </div>
 
-          {/* 사진 촬영 / 갤러리 미리보기 통합 영역 */}
-          <div className="relative w-full h-72 bg-black border-2 border-dashed border-[rgba(0,0,0,0.1)] rounded-bento overflow-hidden shadow-bento">
-            {imagePreview ? (
-              <>
-                <img
-                  src={imagePreview}
-                  alt="신고 사진 미리보기"
-                  className="w-full h-full object-cover"
-                />
+        {/* 사진 촬영 / 갤러리 미리보기 통합 영역 */}
+        <div className="relative w-full h-56 bg-black border-2 border-dashed border-[rgba(0,0,0,0.1)] rounded-bento overflow-hidden shadow-bento">          {imagePreview ? (
+          <>
+            <img
+              src={imagePreview}
+              alt="신고 사진 미리보기"
+              className="w-full h-full object-cover"
+            />
 
-                {/* 다시 촬영 */}
-                <button
-                  type="button"
-                  onClick={startCamera}
-                  className="absolute top-3 left-3 px-3 py-2 rounded-xl bg-black/60 text-white text-xs font-bold flex items-center gap-1"
-                >
-                  <Camera size={16} />
-                  다시 촬영
-                </button>
-
-                {/* 사진 삭제 */}
-                <button
-                  type="button"
-                  onClick={startCamera}
-                  className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center"
-                  aria-label="사진 삭제"
-                >
-                  <X size={21} />
-                </button>
-              </>
-            ) : cameraOpen ? (
-              <>
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover bg-black"
-                />
-
-                {/* 촬영 버튼 */}
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={capturePhoto}
-                    className="w-16 h-16 rounded-full border-4 border-white bg-white/30 flex items-center justify-center active:scale-95 transition-transform"
-                    aria-label="사진 촬영"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-white" />
-                  </button>
-                </div>
-
-                <div className="pointer-events-none absolute top-4 left-4 right-4 text-center">
-                  <span className="inline-block bg-black/45 text-white text-xs rounded-full px-3 py-1.5">
-                    의심목 전체 모습이 보이도록 촬영해주세요
-                  </span>
-                </div>
-              </>
-            ) : (
-              <div className="w-full h-full bg-card-bg flex flex-col items-center justify-center text-text-sub">
-                <Camera size={38} className="mb-3 opacity-60" />
-
-                <span className="font-semibold mb-4">
-                  카메라를 시작할 수 없습니다
-                </span>
-
-                <button
-                  type="button"
-                  onClick={startCamera}
-                  className="bg-primary text-white px-5 py-3 rounded-xl font-bold"
-                >
-                  카메라 다시 시작
-                </button>
-              </div>
-            )}
-          </div>
-
-
-          {/* 갤러리 업로드 버튼 */}
-          <div>
+            {/* 다시 촬영 */}
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full bg-card-bg text-text-main font-bold py-4 rounded-bento border border-[rgba(0,0,0,0.08)] flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-transform"
+              onClick={startCamera}
+              className="absolute top-3 left-3 px-3 py-2 rounded-xl bg-black/60 text-white text-xs font-bold flex items-center gap-1"
             >
-              <ImagePlus size={20} />
-              갤러리에서 사진 선택
+              <Camera size={16} />
+              다시 촬영
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleGallerySelect}
-            />
-          </div>
-
-
-          {cameraError && (
-            <div className="bg-red-50 text-red-500 text-sm rounded-2xl p-4">
-              {cameraError}
-            </div>
-          )}
-
-          {/* 연락처 */}
-          <div>
-            <label className="block text-sm font-semibold text-text-main mb-2">
-              연락처
-            </label>
-
-            <input
-              type="tel"
-              inputMode="numeric"
-              placeholder="010-1234-5678"
-              value={phone}
-              onChange={event =>
-                setPhone(formatPhoneNumber(event.target.value))
-              }
-              className="w-full bg-card-bg border border-[rgba(0,0,0,0.1)] rounded-[15px] px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
+            {/* 사진 삭제 */}
+            <button
+              type="button"
+              onClick={startCamera}
+              className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center"
+              aria-label="사진 삭제"
+            >
+              <X size={21} />
+            </button>
+          </>
+        ) : cameraOpen ? (
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover bg-black"
             />
 
-            <p className="text-xs text-text-sub mt-2">
-              처리 결과 안내를 받을 전화번호를 입력해주세요.
-            </p>
-          </div>
-
-          {submitError && (
-            <div className="bg-red-50 text-red-500 text-sm rounded-2xl p-4">
-              {submitError}
+            {/* 촬영 버튼 */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+              <button
+                type="button"
+                onClick={capturePhoto}
+                className="w-16 h-16 rounded-full border-4 border-white bg-white/30 flex items-center justify-center active:scale-95 transition-transform"
+                aria-label="사진 촬영"
+              >
+                <div className="w-12 h-12 rounded-full bg-white" />
+              </button>
             </div>
-          )}
+
+            <div className="pointer-events-none absolute top-4 left-4 right-4 text-center">
+              <span className="inline-block bg-black/45 text-white text-xs rounded-full px-3 py-1.5">
+                의심목 전체 모습이 보이도록 촬영해주세요
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full bg-card-bg flex flex-col items-center justify-center text-text-sub">
+            <Camera size={38} className="mb-3 opacity-60" />
+
+            <span className="font-semibold mb-4">
+              카메라를 시작할 수 없습니다
+            </span>
+
+            <button
+              type="button"
+              onClick={startCamera}
+              className="bg-primary text-white px-5 py-3 rounded-xl font-bold"
+            >
+              카메라 다시 시작
+            </button>
+          </div>
+        )}
         </div>
+
+
+        {/* 갤러리 업로드 버튼 */}
+        <div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-card-bg text-text-main font-bold py-4 rounded-bento border border-[rgba(0,0,0,0.08)] flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-transform"
+          >
+            <ImagePlus size={20} />
+            갤러리에서 사진 선택
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleGallerySelect}
+          />
+        </div>
+
+
+        {cameraError && (
+          <div className="bg-red-50 text-red-500 text-sm rounded-2xl p-4">
+            {cameraError}
+          </div>
+        )}
+
+        {/* 연락처 */}
+        <div>
+          <label className="block text-sm font-semibold text-text-main mb-2">
+            연락처
+          </label>
+
+          <input
+            type="tel"
+            inputMode="numeric"
+            placeholder="010-1234-5678"
+            value={phone}
+            onChange={event =>
+              setPhone(formatPhoneNumber(event.target.value))
+            }
+            className="w-full bg-card-bg border border-[rgba(0,0,0,0.1)] rounded-[15px] px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
+          />
+
+          <p className="text-xs text-text-sub mt-2">
+            처리 결과 안내를 받을 전화번호를 입력해주세요.
+          </p>
+        </div>
+
+        {submitError && (
+          <div className="bg-red-50 text-red-500 text-sm rounded-2xl p-4">
+            {submitError}
+          </div>
+        )}
+      </div>
       </div>
       {/* 하단 네비게이션 바로 위에 고정되는 신고하기 버튼 */}
       <div className="fixed left-0 right-0 bottom-[72px] z-30 mx-auto max-w-md px-6 py-3 bg-system-bg/95 backdrop-blur-sm border-t border-[rgba(0,0,0,0.04)]">
