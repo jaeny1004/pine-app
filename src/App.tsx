@@ -48,7 +48,13 @@ function AppContent() {
       case 'tracking': return <Tracking navigate={setCurrentScreen} />;
       case 'chatbot': return <Chatbot navigate={setCurrentScreen} />;
       case 'settings': return <Settings navigate={setCurrentScreen} setIsAuthenticated={setIsAuthenticated} />;
-      case 'tickets': return <Tickets navigate={setCurrentScreen} />;
+      case 'tickets':
+  return (
+    <Tickets
+      navigate={setCurrentScreen}
+      isAuthenticated={isAuthenticated}
+    />
+  );
       default: return <Home navigate={setCurrentScreen} isAuthenticated={isAuthenticated} />;
     }
   };
