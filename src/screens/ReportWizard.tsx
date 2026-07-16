@@ -323,7 +323,7 @@ export function ReportWizard({
   };
 
   return (
-    <div className="min-h-screen bg-system-bg flex flex-col">
+    <div className="h-full min-h-0 bg-system-bg flex flex-col overflow-hidden">
       {/* 상단 헤더 */}
       <div className="bg-card-bg p-4 pt-12 flex items-center border-b border-[rgba(0,0,0,0.04)] sticky top-0 z-10 shadow-sm">
         <button
@@ -338,7 +338,7 @@ export function ReportWizard({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 pb-32">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-44">
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-bold text-text-main mb-2">
@@ -483,21 +483,20 @@ export function ReportWizard({
               {submitError}
             </div>
           )}
-
-          {/* 신고하기 */}
-          <button
-            type="button"
-            disabled={!imageFile || submitting}
-            onClick={handleSubmit}
-            className="w-full bg-primary text-white font-bold py-4 rounded-bento disabled:opacity-50 shadow-bento flex items-center justify-center gap-2"
-          >
-            <Send size={20} />
-
-            {submitting ? '신고 접수 중...' : '신고하기'}
-          </button>
         </div>
       </div>
-
+      {/* 하단 네비게이션 바로 위에 고정되는 신고하기 버튼 */}
+      <div className="fixed left-0 right-0 bottom-[72px] z-30 mx-auto max-w-md px-6 py-3 bg-system-bg/95 backdrop-blur-sm border-t border-[rgba(0,0,0,0.04)]">
+        <button
+          type="button"
+          disabled={!imageFile || submitting}
+          onClick={handleSubmit}
+          className="w-full bg-primary text-white font-bold py-4 rounded-bento disabled:opacity-50 shadow-bento flex items-center justify-center gap-2"
+        >
+          <Send size={20} />
+          {submitting ? '신고 접수 중...' : '신고하기'}
+        </button>
+      </div>
       {/* 카메라 캡처용 숨김 canvas */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
