@@ -342,10 +342,6 @@ export function ReportWizard({
           <h2 className="text-lg font-bold text-text-main mb-1">
             의심목 사진 등록
           </h2>
-
-          <p className="text-text-sub text-sm leading-5">
-            피해를 입은 소나무의 모습이 담긴 사진을 촬영하거나 업로드하여 주세요
-          </p>
         </div>
 
         {/* 사진 촬영 / 갤러리 미리보기 통합 영역 */}
