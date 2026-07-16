@@ -27,10 +27,10 @@ function AppContent() {
   const [notification, setNotification] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
 
   const handleReportSuccess = () => {
-    setCurrentScreen('tickets');
+    setCurrentScreen('home');
     setNotification({
       show: true,
-      message: '🌳 의심목 신고가 정상 접수되었습니다. (클릭하여 상태 추적)'
+      message: '🌳 의심목 신고가 정상 접수되었습니다.'
     });
   };
 
@@ -56,17 +56,17 @@ function AppContent() {
   return (
     <div className="w-full h-[100dvh] bg-black sm:py-8 sm:px-4 flex justify-center items-center overflow-hidden">
       <div className="w-full max-w-md h-full bg-system-bg sm:rounded-[40px] sm:shadow-2xl overflow-hidden relative border-8 border-transparent sm:border-gray-900 flex flex-col">
-        
+
         {/* Dynamic Island / Status Bar area space */}
         <div className="hidden sm:block absolute top-0 inset-x-0 h-7 bg-gray-900 rounded-b-3xl z-50 w-32 mx-auto" />
-        
-        <Notification 
-          show={notification.show} 
+
+        <Notification
+          show={notification.show}
           message={notification.message}
           onClick={handleNotificationClick}
           onClose={() => setNotification(prev => ({ ...prev, show: false }))}
         />
-        
+
         <div className="flex-1 overflow-hidden relative">
           <AnimatePresence mode="wait">
             <motion.div

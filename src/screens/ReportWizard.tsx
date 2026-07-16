@@ -272,6 +272,26 @@ export function ReportWizard({
     });
   };
 
+  const saveReportTokenToDevice = (reportToken: string) => {
+    const storageKey = 'myReportTokens';
+
+    try {
+      const storedValue = localStorage.getItem(storageKey);
+      const existingTokens: string[] = storedValue
+        ? JSON.parse(storedValue)
+        : [];
+
+      if (!existingTokens.includes(reportToken)) {
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify([...existingTokens, reportToken])
+        );
+      }
+    } catch (error) {
+      console.error('신고 토큰 저장 실패:', error);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!imageFile) {
       setSubmitError('신고할 사진을 촬영하거나 갤러리에서 선택해주세요.');
@@ -281,6 +301,8 @@ export function ReportWizard({
     try {
       setSubmitting(true);
       setSubmitError('');
+
+      const reportToken = crypto.randomUUID();
 
       // 화면에는 표시하지 않고 제출 시 위치정보만 수집
       const coordinates = await getCurrentCoordinates();
@@ -302,11 +324,14 @@ export function ReportWizard({
         ai_probability: null,
         ai_label: null,
         ai_status: 'pending',
+        report_token: reportToken,
       });
 
       if (!savedRecord) {
         throw new Error('신고 정보를 저장하지 못했습니다.');
       }
+
+      saveReportTokenToDevice(reportToken);
 
       onSuccess();
     } catch (error) {

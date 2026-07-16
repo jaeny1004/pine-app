@@ -11,6 +11,7 @@ export interface PineRecord {
   ai_probability?: number | null;
   ai_label?: string | null;
   ai_status?: string | null;
+  report_token?: string | null;
 }
 
 export type ScreenName =
