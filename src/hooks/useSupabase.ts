@@ -18,16 +18,30 @@ function mapSupabaseToPineRecord(row: any): PineRecord {
     image_url: row.image_url,
     phone_number: row.phone_number,
     status: row.status,
+
+    report_token: row.report_token ?? null,
+
+    ai_probability: row.ai_probability ?? null,
+    ai_label: row.ai_label ?? null,
+    ai_status: row.ai_status ?? null,
   };
 }
 
-function mapPineRecordToSupabase(record: Omit<PineRecord, 'id' | 'created_at'>) {
+function mapPineRecordToSupabase(
+  record: Omit<PineRecord, 'id' | 'created_at'>
+) {
   return {
     latitude: record.latitude,
     longitude: record.longitude,
     image_url: record.image_url,
     phone_number: record.phone_number,
-    status: record.status
+    status: record.status,
+
+    report_token: record.report_token ?? null,
+
+    ai_probability: record.ai_probability ?? null,
+    ai_label: record.ai_label ?? null,
+    ai_status: record.ai_status ?? null,
   };
 }
 let mockRecords: PineRecord[] = [
