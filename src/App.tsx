@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import {
+  useState,
+  useCallback,
+} from 'react';
 import { ScreenName } from './types';
 import { Home } from './screens/Home';
 import { Login } from './screens/Login';
@@ -25,6 +28,22 @@ function AppContent() {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('home');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [notification, setNotification] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+  const [
+    fieldTargetRecordId,
+    setFieldTargetRecordId,
+  ] = useState<string | null>(null);
+
+  const handleOpenFieldRecord = (
+    recordId: string
+  ) => {
+    setFieldTargetRecordId(recordId);
+    setCurrentScreen('field');
+  };
+
+  const handleFieldTargetHandled =
+    useCallback(() => {
+      setFieldTargetRecordId(null);
+    }, []);
 
   const handleReportSuccess = () => {
     setCurrentScreen('home');
@@ -44,17 +63,27 @@ function AppContent() {
       case 'home': return <Home navigate={setCurrentScreen} isAuthenticated={isAuthenticated} />;
       case 'login': return <Login navigate={setCurrentScreen} setIsAuthenticated={setIsAuthenticated} />;
       case 'report': return <ReportWizard navigate={setCurrentScreen} onSuccess={handleReportSuccess} />;
-      case 'field': return <FieldManagement navigate={setCurrentScreen} />;
+      case 'field':
+        return (
+          <FieldManagement
+            navigate={setCurrentScreen}
+            initialRecordId={fieldTargetRecordId}
+            onInitialRecordHandled={
+              handleFieldTargetHandled
+            }
+          />
+        );
       case 'tracking': return <Tracking navigate={setCurrentScreen} />;
       case 'chatbot': return <Chatbot navigate={setCurrentScreen} />;
       case 'settings': return <Settings navigate={setCurrentScreen} setIsAuthenticated={setIsAuthenticated} />;
       case 'tickets':
-  return (
-    <Tickets
-      navigate={setCurrentScreen}
-      isAuthenticated={isAuthenticated}
-    />
-  );
+        return (
+          <Tickets
+            navigate={setCurrentScreen}
+            isAuthenticated={isAuthenticated}
+            onOpenRecord={handleOpenFieldRecord}
+          />
+        );
       default: return <Home navigate={setCurrentScreen} isAuthenticated={isAuthenticated} />;
     }
   };

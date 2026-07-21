@@ -76,7 +76,10 @@ interface SupabaseContextType {
   loading: boolean;
   fetchRecords: () => Promise<void>;
   addRecord: (record: Omit<PineRecord, 'id' | 'created_at'>) => Promise<PineRecord | null>;
-  updateStatus: (id: string, status: PineRecord['status']) => Promise<void>;
+  updateStatus: (
+    id: string,
+    status: PineRecord['status']
+  ) => Promise<boolean>;
   uploadImage: (file: File) => Promise<string | null>;
 }
 
@@ -145,14 +148,46 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     return newRecord;
   };
 
-  const updateStatus = async (id: string, status: PineRecord['status']) => {
+  const updateStatus = async (
+    id: string,
+    status: PineRecord['status']
+  ): Promise<boolean> => {
+    const previousRecords = records;
+
+    // 화면부터 즉시 갱신
+    setRecords(prev =>
+      prev.map(record =>
+        record.id === id
+          ? { ...record, status }
+          : record
+      )
+    );
+
     if (supabase) {
-      const { error } = await supabase.from('pine_records').update({ status }).eq('id', id);
-      if (!error) fetchRecords();
-    } else {
-      mockRecords = mockRecords.map(r => r.id === id ? { ...r, status } : r);
-      setRecords([...mockRecords]);
+      const { error } = await supabase
+        .from('pine_records')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) {
+        console.error('민원 상태 변경 실패:', error);
+
+        // 실패하면 원래 상태로 복구
+        setRecords(previousRecords);
+        return false;
+      }
+
+      return true;
     }
+
+    mockRecords = mockRecords.map(record =>
+      record.id === id
+        ? { ...record, status }
+        : record
+    );
+
+    setRecords([...mockRecords]);
+    return true;
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {

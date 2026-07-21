@@ -1,5 +1,9 @@
 import { SampleQrPanel } from '../components/SampleQrPanel';
-import { useState } from 'react';
+import {
+  useState,
+  useEffect,
+  useMemo,
+} from 'react';
 import { PineRecord, ScreenName } from '../types';
 import {
   Mic,
@@ -16,28 +20,76 @@ import { ChemicalQrPanel } from '../components/ChemicalQrPanel';
 
 interface FieldManagementProps {
   navigate: (screen: ScreenName) => void;
+  initialRecordId?: string | null;
+  onInitialRecordHandled?: () => void;
 }
 
 type FieldPanelMode = 'menu' | 'stt' | 'chemical' | 'sample';
 
-export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
+export function FieldManagement({
+  navigate: _navigate,
+  initialRecordId,
+  onInitialRecordHandled,
+}: FieldManagementProps) {
   const [activeTab, setActiveTab] = useState<'surveillance' | 'control'>('surveillance');
   const { records, updateStatus } = useSupabase();
-  const [selectedRecord, setSelectedRecord] = useState<PineRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] =
+    useState<PineRecord | null>(null);
+
+  const [
+    focusedRecordId,
+    setFocusedRecordId,
+  ] = useState<string | null>(
+    initialRecordId ?? null
+  );
 
   const [controlPanelMode, setControlPanelMode] = useState<FieldPanelMode>('menu');
 
   // Mock STT
   const [isRecording, setIsRecording] = useState(false);
   const [voiceLog, setVoiceLog] = useState('');
+  // 여기부터 추가
+  useEffect(() => {
+    if (!initialRecordId) {
+      return;
+    }
+
+    const targetRecord = records.find(
+      record => record.id === initialRecordId
+    );
+
+    if (!targetRecord) {
+      return;
+    }
+
+    if (targetRecord.status === 'in_progress') {
+      setActiveTab('control');
+    } else {
+      setActiveTab('surveillance');
+    }
+
+    setSelectedRecord(targetRecord);
+    setFocusedRecordId(targetRecord.id);
+    setControlPanelMode('menu');
+
+    onInitialRecordHandled?.();
+  }, [
+    initialRecordId,
+    records,
+    onInitialRecordHandled,
+  ]);
+  // 여기까지 추가
 
   const closeBottomSheet = () => {
     setSelectedRecord(null);
     setControlPanelMode('menu');
   };
 
-  const openRecordSheet = (record: PineRecord) => {
+  const openRecordSheet = (
+    record: PineRecord
+  ) => {
     setSelectedRecord(record);
+    setFocusedRecordId(record.id);
     setControlPanelMode('menu');
   };
 
@@ -56,10 +108,30 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
     }
   };
 
-  const handleComplete = () => {
-    if (!selectedRecord) return;
+  const handleComplete = async () => {
+    if (!selectedRecord) {
+      return;
+    }
 
-    updateStatus(selectedRecord.id, 'completed');
+    const nextStatus: PineRecord['status'] =
+      activeTab === 'surveillance'
+        ? 'in_progress'
+        : 'completed';
+
+    const success = await updateStatus(
+      selectedRecord.id,
+      nextStatus
+    );
+
+    if (!success) {
+      console.error(
+        '민원 상태를 변경하지 못했습니다.'
+      );
+
+      return;
+    }
+
+    setFocusedRecordId(null);
     closeBottomSheet();
   };
 
@@ -74,6 +146,48 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
   const handleChemicalQrScan = () => {
     console.log('약제 QR 인식 완료');
   };
+
+  /*
+ * 예찰·조사 지도에는 아직 조사하지 않은 민원만 표시
+ */
+  const surveillanceRecords = useMemo(() => {
+    const pendingRecords = records.filter(
+      record => record.status === 'pending'
+    );
+
+    if (!focusedRecordId) {
+      return pendingRecords;
+    }
+
+    const focusedRecord = records.find(
+      record => record.id === focusedRecordId
+    );
+
+    if (
+      !focusedRecord ||
+      pendingRecords.some(
+        record => record.id === focusedRecord.id
+      )
+    ) {
+      return pendingRecords;
+    }
+
+    /*
+     * 민원 화면에서 이미 조사·방제 완료된 건을 눌렀을 때도
+     * 위치 확인을 위해 해당 민원만 지도에 임시로 포함
+     */
+    return [focusedRecord, ...pendingRecords];
+  }, [records, focusedRecordId]);
+
+  /*
+   * 방제·시공 지도에는 조사 완료된 민원만 표시
+   */
+  const controlRecords = useMemo(() => {
+    return records.filter(
+      record => record.status === 'in_progress'
+    );
+  }, [records]);
+
   return (
     <div className="h-full bg-system-bg flex flex-col overflow-hidden">
       {/* Header Tabs */}
@@ -89,6 +203,7 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
               key={tab.id}
               onClick={() => {
                 setActiveTab(tab.id as 'surveillance' | 'control');
+                setFocusedRecordId(null);
                 closeBottomSheet();
               }}
               className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors relative ${activeTab === tab.id ? 'text-text-main' : 'text-text-sub'
@@ -112,7 +227,8 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
           <div className="absolute inset-0 p-4 pb-4">
             <div className="w-full h-full">
               <LeafletMap
-                records={records}
+                records={surveillanceRecords}
+                focusRecordId={focusedRecordId}
                 onMarkerClick={openRecordSheet}
               />
             </div>
@@ -123,7 +239,8 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
           <div className="absolute inset-0 p-4 pb-4">
             <div className="w-full h-full">
               <LeafletMap
-                records={records.filter(record => record.status !== 'completed')}
+                records={controlRecords}
+                focusRecordId={focusedRecordId}
                 onMarkerClick={openRecordSheet}
               />
             </div>
@@ -191,13 +308,20 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
                 시료 채취 QR 등록
               </button>
 
-              <button
-                onClick={handleComplete}
-                className="bg-primary text-white font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs"
-              >
-                <CheckCircle2 size={18} />
-                조치완료
-              </button>
+              {selectedRecord.status === 'pending' ? (
+                <button
+                  onClick={handleComplete}
+                  className="bg-primary text-white font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs"
+                >
+                  <CheckCircle2 size={18} />
+                  조사 완료
+                </button>
+              ) : (
+                <div className="bg-gray-100 text-text-sub font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs">
+                  <CheckCircle2 size={18} />
+                  처리 완료
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -266,7 +390,7 @@ export function FieldManagement({ navigate: _navigate }: FieldManagementProps) {
                 className="bg-primary text-white font-bold py-4 rounded-xl flex flex-col items-center justify-center gap-2 text-xs"
               >
                 <CheckCircle2 size={18} />
-                조치완료
+                방제 완료
               </button>
             </div>
           </div>

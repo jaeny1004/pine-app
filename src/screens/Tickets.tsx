@@ -6,11 +6,13 @@ import { TicketCard } from '../components/TicketCard';
 interface TicketsProps {
   navigate: (screen: ScreenName) => void;
   isAuthenticated: boolean;
+  onOpenRecord: (recordId: string) => void;
 }
 
 export function Tickets({
   navigate: _navigate,
   isAuthenticated,
+  onOpenRecord,
 }: TicketsProps) {
   const { records } = useSupabase();
 
@@ -61,10 +63,14 @@ export function Tickets({
           </div>
         ) : (
           visibleRecords.map(record => (
-            <TicketCard
+            <button
               key={record.id}
-              record={record}
-            />
+              type="button"
+              onClick={() => onOpenRecord(record.id)}
+              className="block w-full text-left rounded-2xl active:scale-[0.99] transition-transform"
+            >
+              <TicketCard record={record} />
+            </button>
           ))
         )}
       </div>
